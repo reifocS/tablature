@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Using the alpha builds for testing here -->
+    <script src="https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #controls {
+            position: sticky;
+            top: 0;
+            z-index: 10000;
+            width: 100%;
+            height: 30px;
+            background: #E4E5E6;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        #controls>* {
+            margin-right: 5px;
+        }
+
+        /* Styles for player */
+        .at-cursor-bar {
+            /* Defines the color of the bar background when a bar is played */
+            background: rgba(255, 242, 0, 0.25);
+        }
+
+        .at-selection div {
+            /* Defines the color of the selection background */
+            background: rgba(64, 64, 255, 0.1)
+        }
+
+        .at-cursor-beat {
+            /* Defines the beat cursor */
+            background: rgba(64, 64, 255, 0.75);
+            width: 3px;
+        }
+
+        .at-highlight * {
+            /* Defines the color of the music symbols when they are being played (svg) */
+            fill: #0078ff;
+            stroke: #0078ff;
+        }
+    </style>
+</head>
+
+<body>
+<div id="controls">
+    <button id="playPause">Play/Pause</button>
+    <span id="counter">1</span>
+    <span id="and">and</span>
+</div>
+<div id="alphaTab" data-player-scrolloffsety="-30" data-tex="true"
+     data-player-enableplayer="true"
+     data-player-soundfont="https://cdn.jsdelivr.net/npm/@coderline/alphatab@alpha/dist/soundfont/sonivox.sf2">
+</div>
+
+<script type="text/javascript">
+    const el = document.getElementById('alphaTab');
+    let api = new alphaTab.AlphaTabApi(el, {
+        file: "https://www.alphatab.net/files/canon.gp",
+    });
+    api.metronomeVolume = 1;
+    api.playbackSpeed = 0.5;
+
+    document.getElementById('playPause').onclick = () => {
+        api.playPause();
+    };
+
+    const counterSpan = document.getElementById('counter');
+    const andSpan = document.getElementById('and');
+
+    api.midiEventsPlayedFilter = [alphaTab.midi.MidiEventType.SystemExclusive2];
+
+    andSpan.style.display = 'none'; // hide 'and' at start
+    api.playerStateChanged.on(e => {
+        // reset to 1 when stopped
+        if(e.stopped) {
+            counterSpan.innerText = 1;
+            andSpan.style.display = 'none';
+        }
+    });
+    api.midiEventsPlayed.on(e => {
+        for (const midi of e.events) { // loop through all played events
+            if (midi.isMetronome) { // if a metronome was played, update the UI
+                console.log('metronome');
+                counterSpan.innerText = midi.metronomeNumerator + 1;
+                andSpan.style.display = 'none'; // hide 'and' on tick.
+                // show "and" after half the metronome duration
+                const andTime = (midi.metronomeDurationInMilliseconds / 2) / api.playbackSpeed;
+                setTimeout(() => {
+                    andSpan.style.display = 'inline';
+                }, andTime);
+            }
+        }
+    });
+</script>
+</body>
+
+</html>
