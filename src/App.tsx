@@ -40,6 +40,7 @@ export default function App() {
                 logLevel: 1,
                 useWorkers: true
             },
+            file: "https://www.alphatab.net/files/canon.gp",
             display: {
                 staveProfile: "Default",
                 resources: {
